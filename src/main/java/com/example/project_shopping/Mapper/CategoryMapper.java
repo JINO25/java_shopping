@@ -1,20 +1,21 @@
 package com.example.project_shopping.Mapper;
 
 import com.example.project_shopping.DTO.Category.CategoryDTO;
-import com.example.project_shopping.DTO.User.CreateUserDTO;
-import com.example.project_shopping.DTO.User.UserResponseDTO;
 import com.example.project_shopping.Entity.Category;
-import com.example.project_shopping.Entity.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface CategoryMapper {
-    CategoryMapper INSTANCE = Mappers.getMapper(CategoryMapper.class);
-    @Mapping(source = "id", target = "id")
-    @Mapping(source = "name",target = "name")
-    CategoryDTO toResponseDTO(Category category);
+@Component
+@AllArgsConstructor
+public class CategoryMapper {
+    private ModelMapper modelMapper;
 
-    Category toEntity(CategoryDTO categoryDTO);
+    public CategoryDTO toResponseDTO(Category category) {
+        return modelMapper.map(category, CategoryDTO.class);
+    }
+
+    public Category toEntity(CategoryDTO categoryDTO) {
+        return modelMapper.map(categoryDTO, Category.class);
+    }
 }

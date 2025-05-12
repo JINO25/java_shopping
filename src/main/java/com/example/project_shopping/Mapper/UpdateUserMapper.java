@@ -1,18 +1,22 @@
 package com.example.project_shopping.Mapper;
 
-import com.example.project_shopping.DTO.User.CreateUserDTO;
 import com.example.project_shopping.DTO.User.UpdateUserDTO;
-import com.example.project_shopping.DTO.User.UserResponseDTO;
 import com.example.project_shopping.Entity.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface UpdateUserMapper {
-    UpdateUserMapper INSTANCE = Mappers.getMapper(UpdateUserMapper.class);
+@Component
+@AllArgsConstructor
+public class UpdateUserMapper {
 
-    UpdateUserDTO toResponseDTO(User user);
+    private final ModelMapper modelMapper;
 
-    User toEntity(UpdateUserDTO updateUserDTO);
+    public UpdateUserDTO toDTO(User user) {
+        return modelMapper.map(user, UpdateUserDTO.class);
+    }
+
+    public void updateEntity(UpdateUserDTO updateUserDTO, User existingUser) {
+        modelMapper.map(updateUserDTO, existingUser);
+    }
 }

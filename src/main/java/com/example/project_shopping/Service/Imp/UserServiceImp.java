@@ -1,7 +1,6 @@
 package com.example.project_shopping.Service.Imp;
 
 import com.example.project_shopping.DTO.User.CreateUserDTO;
-import com.example.project_shopping.DTO.User.DeleteUserDTO;
 import com.example.project_shopping.DTO.User.UpdateUserDTO;
 import com.example.project_shopping.DTO.User.UserResponseDTO;
 import com.example.project_shopping.Entity.Role;
@@ -14,11 +13,9 @@ import com.example.project_shopping.Repository.RoleRepository;
 import com.example.project_shopping.Repository.UserRepository;
 import com.example.project_shopping.Service.CartService;
 import com.example.project_shopping.Service.UserService;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,10 +24,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class UserServiceImp implements UserService {
     private UserRepository userRepository;
-    private UserMapper userMapper;
-    private UpdateUserMapper updateUserMapper;
     private final RoleRepository roleRepository;
     private CartService cartService;
+    private UserMapper userMapper;
+    private UpdateUserMapper updateUserMapper;
 
     @Override
     public List<UserResponseDTO> findAllUsers() {
@@ -48,8 +45,8 @@ public class UserServiceImp implements UserService {
         User user = userRepository.findUserById(id);
         if(user==null) throw new EntityNotFoundException("User not found with "+id);
 
-        userResponseDTO= userMapper.toResponseDTO(user);
-
+//        userResponseDTO= userMapper.toResponseDTO(user);
+        userResponseDTO = userMapper.toResponseDTO(user);
         return userResponseDTO;
     }
 
@@ -99,7 +96,7 @@ public class UserServiceImp implements UserService {
             user = userRepository.save(user);
         }
 
-        return updateUserMapper.toResponseDTO(user);
+        return updateUserMapper.toDTO(user);
     }
 
     @Override

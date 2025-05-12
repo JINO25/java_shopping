@@ -2,11 +2,10 @@ package com.example.project_shopping.Service.Imp;
 
 import com.example.project_shopping.DTO.Category.CategoryDTO;
 import com.example.project_shopping.DTO.Category.CategoryWithProductListDTO;
-import com.example.project_shopping.DTO.Product.ProductDTO;
 import com.example.project_shopping.Entity.Category;
 import com.example.project_shopping.Entity.Product;
-import com.example.project_shopping.Mapper.CategoryMapper;
 import com.example.project_shopping.Mapper.CategoryWithProductMapper;
+import com.example.project_shopping.Mapper.CategoryMapper;
 import com.example.project_shopping.Repository.CategoryRepository;
 import com.example.project_shopping.Repository.ProductRepository;
 import com.example.project_shopping.Service.CategoryService;

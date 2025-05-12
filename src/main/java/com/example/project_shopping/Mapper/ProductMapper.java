@@ -2,39 +2,57 @@ package com.example.project_shopping.Mapper;
 
 import com.example.project_shopping.DTO.Product.ProductDTO;
 import com.example.project_shopping.DTO.Product.ProductVariantDTO;
-import com.example.project_shopping.Entity.Category;
 import com.example.project_shopping.Entity.Product;
 import com.example.project_shopping.Entity.ProductVariant;
-import com.example.project_shopping.Entity.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
-import org.mapstruct.factory.Mappers;
+import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
-public interface ProductMapper {
+@Component
+@AllArgsConstructor
+public class ProductMapper {
 
-    ProductMapper INSTANCE = Mappers.getMapper(ProductMapper.class);
+    private final ModelMapper modelMapper;
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "name",source = "name")
-    @Mapping(target = "description", source = "description")
-    @Mapping(source = "user.name", target = "userName")
-    @Mapping(source = "category.name", target = "categoryName")
-    @Mapping(target = "productVariants", source = "productVariants")
-    ProductDTO toProductDTO(Product product);
+    public ProductDTO toProductDTO(Product product) {
+        // Custom mapping userName và categoryName
+        modelMapper.typeMap(Product.class, ProductDTO.class).addMappings(mapper -> {
+            mapper.map(src -> src.getUser().getName(), ProductDTO::setUserName);
+            mapper.map(src -> src.getCategory().getName(), ProductDTO::setCategoryName);
+        });
 
+        return modelMapper.map(product, ProductDTO.class);
+    }
 
-    Product toProduct(ProductDTO productDTO);
+    public Product toProduct(ProductDTO productDTO) {
+        return modelMapper.map(productDTO, Product.class);
+    }
 
-    ProductVariantDTO toProductVariantDTO(Product product);
+    public ProductVariantDTO toProductVariantDTO(ProductVariant productVariant) {
+        return modelMapper.map(productVariant, ProductVariantDTO.class);
+    }
 
-    ProductVariant toProductVariant(ProductVariantDTO productVariantDTO);
+    public ProductVariant toProductVariant(ProductVariantDTO productVariantDTO) {
+        return modelMapper.map(productVariantDTO, ProductVariant.class);
+    }
 
-    List<ProductDTO> toProductDTOList(List<Product> products);
+    public List<ProductDTO> toProductDTOList(List<Product> products) {
+//        modelMapper.typeMap(Product.class, ProductDTO.class).addMappings(mapper -> {
+//            mapper.map(src -> src.getUser().getName(), ProductDTO::setUserName);
+//            mapper.map(src -> src.getCategory().getName(), ProductDTO::setCategoryName);
+//        });
 
+        return products.stream()
+                .map(this::toProductDTO)
+                .collect(Collectors.toList());
+    }
 
-    List<ProductVariantDTO> toProductVariantDTOList(List<ProductVariantDTO> productVariants);
+    public List<ProductVariantDTO> toProductVariantDTOList(List<ProductVariant> productVariants) {
+        return productVariants.stream()
+                .map(this::toProductVariantDTO)
+                .collect(Collectors.toList());
+    }
 }

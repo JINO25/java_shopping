@@ -15,7 +15,6 @@ import com.example.project_shopping.Repository.ProductRepository;
 import com.example.project_shopping.Repository.ProductVariantRepository;
 import com.example.project_shopping.Repository.UserRepository;
 import com.example.project_shopping.Service.ProductService;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -47,11 +46,16 @@ public class ProductServiceImp implements ProductService {
 
     @Override
     public List<ProductDTO> findProductByCategory(String name){
+        try {
         Category category = categoryRepository.findByName(name);
         if(category == null) throw new EntityNotFoundException("Category: "+ name+" not found!");
         List<Product> product = productRepository.findProductByCategory(category);
-
+        System.out.println("Found products: " + product.size());
         return productMapper.toProductDTOList(product);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi mapping ProductDTO: " + e.getMessage());
+        }
     }
 
     @Override
