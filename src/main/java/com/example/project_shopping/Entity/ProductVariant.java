@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 @Getter
 @Setter
 @Entity
@@ -36,5 +39,11 @@ public class ProductVariant {
     @JoinColumn(name = "Product_id", nullable = false)
     @JsonIgnore
     private Product product;
+
+    @OneToMany(mappedBy = "product")
+    private Set<OrderDetail> orderDetails = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "product")
+    private Set<CartItem> cartItems = new LinkedHashSet<>();
 
 }

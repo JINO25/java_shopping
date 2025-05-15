@@ -23,8 +23,8 @@ public class OrderDetail {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "Product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "ProductVariant_id", nullable = false)
+    private ProductVariant product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Order_id", nullable = false)

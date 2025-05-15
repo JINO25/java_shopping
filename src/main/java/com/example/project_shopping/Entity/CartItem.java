@@ -19,13 +19,13 @@ public class CartItem {
     private Integer quantity;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.ALL)
     @JoinColumn(name = "Cart_id", nullable = false)
     private Cart cart;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "Product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "ProductVariant_id", nullable = false)
+    private ProductVariant product;
 
 }

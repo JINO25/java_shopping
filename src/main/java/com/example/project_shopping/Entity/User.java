@@ -31,17 +31,10 @@ public class User {
     @Column(name = "email", nullable = false, length = 45)
     private String email;
 
-    @Size(max = 45)
     @NotNull
-    @Column(name = "password", nullable = false, length = 45)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Size(max = 45)
-    @NotNull
-    @Column(name = "address", nullable = false, length = 45)
-    private String address;
-
-    @Size(max = 45)
     @Column(name = "photo", length = 45)
     private String photo;
 
@@ -58,6 +51,10 @@ public class User {
     private Cart cart;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Set<Address> addresses;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Order> orders = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,6 +68,10 @@ public class User {
     public void addCreateAt(){
         if(createAt == null){
             createAt = LocalDate.now();
+        }
+
+        if (this.photo == null || this.photo.isEmpty()) {
+            this.photo = "default-photo.jpg";
         }
     }
 }

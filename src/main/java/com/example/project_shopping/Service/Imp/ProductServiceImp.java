@@ -89,7 +89,7 @@ public class ProductServiceImp implements ProductService {
         variant.setPrice(dto.getPrice());
         variant.setStock(dto.getStock());
         variant.setProduct(product);
-//        productVariantRepository.save(variant);
+
         product.setProductVariants(new HashSet<>(List.of(variant)));
         productRepository.save(product);
 

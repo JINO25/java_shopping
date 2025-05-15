@@ -40,11 +40,8 @@ public class Product {
     @JsonBackReference
     private Category category;
 
-    @OneToMany(mappedBy = "product")
-    private Set<CartItem> cartItems = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "product")
-    private Set<OrderDetail> orderDetails = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Image> images = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product",cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ProductVariant> productVariants = new LinkedHashSet<>();

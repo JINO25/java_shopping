@@ -40,11 +40,6 @@ public class ProductMapper {
     }
 
     public List<ProductDTO> toProductDTOList(List<Product> products) {
-//        modelMapper.typeMap(Product.class, ProductDTO.class).addMappings(mapper -> {
-//            mapper.map(src -> src.getUser().getName(), ProductDTO::setUserName);
-//            mapper.map(src -> src.getCategory().getName(), ProductDTO::setCategoryName);
-//        });
-
         return products.stream()
                 .map(this::toProductDTO)
                 .collect(Collectors.toList());

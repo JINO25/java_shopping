@@ -15,9 +15,6 @@ public class UpdateUserDTO {
     private String email;
 
     @Size(max = 45)
-    private String address;
-
-    @Size(max = 45)
     private String photo;
 
 }

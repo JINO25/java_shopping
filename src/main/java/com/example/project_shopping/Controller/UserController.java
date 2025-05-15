@@ -6,11 +6,13 @@ import com.example.project_shopping.DTO.User.UpdateUserDTO;
 import com.example.project_shopping.DTO.User.UserResponseDTO;
 import com.example.project_shopping.Exception.EmailAlreadyExistsException;
 import com.example.project_shopping.Service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -35,10 +37,17 @@ public class UserController {
         return new ResponseEntity<>(userResponseDTO,HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody CreateUserDTO createUserDTO) {
-            UserResponseDTO response = userService.createUser(createUserDTO);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+    @PostMapping("/create")
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserDTO createUserDTO, BindingResult bindingResult) {
+        if(bindingResult.hasErrors()){
+            StringBuilder errorMsg = new StringBuilder();
+            bindingResult.getAllErrors().forEach(e->{
+                errorMsg.append(e.getDefaultMessage()).append("\n");
+            });
+            return new ResponseEntity<>(errorMsg, HttpStatus.BAD_REQUEST);
+        }
+        UserResponseDTO response = userService.createUser(createUserDTO);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
 
     }
 
