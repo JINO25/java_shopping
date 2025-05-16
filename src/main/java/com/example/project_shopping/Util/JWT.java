@@ -1,5 +1,6 @@
 package com.example.project_shopping.Util;
 
+import com.example.project_shopping.Entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,12 +30,11 @@ public class JWT {
         String secret = env.getProperty(jwtSecret,jwtDefault);
         SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         jwt = Jwts.builder().issuer("ShoppingApp").subject(authentication.getName())
-                .claim("username", authentication.getName())
+                .claim("userID", authentication.getPrincipal())
                 .claim("authorities", authentication.getAuthorities().stream().map(
                         GrantedAuthority::getAuthority).collect(Collectors.joining(",")))
                 .issuedAt(new java.util.Date())
-//                .expiration(new java.util.Date(System.currentTimeMillis()+expirationTime))
-                .expiration(new java.util.Date((new java.util.Date()).getTime() + 30000000))
+                .expiration(new java.util.Date(System.currentTimeMillis()+expirationTime))
                 .signWith(secretKey).compact();
 
         return jwt;

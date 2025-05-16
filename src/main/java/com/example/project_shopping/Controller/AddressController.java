@@ -16,17 +16,16 @@ public class AddressController {
 
     private final AddressService addressService;
 
-    @PostMapping("/{userId}")
+    @PostMapping()
     public ResponseEntity<AddressDTO> createAddress(
-            @PathVariable Integer userId,
             @RequestBody AddressDTO addressDTO) {
-        AddressDTO createdAddress = addressService.createAddress(userId, addressDTO);
+        AddressDTO createdAddress = addressService.createAddress(addressDTO);
         return new ResponseEntity<>(createdAddress, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<AddressDTO>> getAddressByUserId(@PathVariable Long userId) {
-        List<AddressDTO> addressDTO = addressService.getAddressByUserId(userId);
+    @GetMapping()
+    public ResponseEntity<List<AddressDTO>> getAddressByUserId() {
+        List<AddressDTO> addressDTO = addressService.getAddressByUserId();
         return new ResponseEntity<>(addressDTO,HttpStatus.OK);
     }
 

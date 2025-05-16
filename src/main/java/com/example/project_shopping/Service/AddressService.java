@@ -5,9 +5,9 @@ import com.example.project_shopping.DTO.Address.AddressDTO;
 import java.util.List;
 
 public interface AddressService {
-    AddressDTO createAddress(Integer userId, AddressDTO addressDTO);
+    AddressDTO createAddress(AddressDTO addressDTO);
 
-    List<AddressDTO> getAddressByUserId(Long userId);
+    List<AddressDTO> getAddressByUserId();
 
     AddressDTO updateAddressByUserId(AddressDTO addressDTO, Integer addressId);
 

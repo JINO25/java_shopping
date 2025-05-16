@@ -8,7 +8,7 @@ import lombok.Setter;
 public class CreateProductRequestDTO {
     private String name;
     private String description;
-    private Integer userId;
+//    private Integer userId;
     private String categoryName;
 
     private String option;

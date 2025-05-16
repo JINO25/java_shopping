@@ -15,6 +15,7 @@ import com.example.project_shopping.Repository.ProductRepository;
 import com.example.project_shopping.Repository.ProductVariantRepository;
 import com.example.project_shopping.Repository.UserRepository;
 import com.example.project_shopping.Service.ProductService;
+import com.example.project_shopping.Util.Auth;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -66,6 +67,7 @@ public class ProductServiceImp implements ProductService {
 
     @Override
     public ProductDTO create(CreateProductRequestDTO dto) {
+        Integer userID = Auth.getCurrentUserID();
         Product product = new Product();
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
@@ -78,7 +80,7 @@ public class ProductServiceImp implements ProductService {
         }
         product.setCategory(category);
 
-        User user = userRepository.findById(dto.getUserId())
+        User user = userRepository.findById(userID)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         product.setUser(user);
 

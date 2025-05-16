@@ -1,6 +1,7 @@
 package com.example.project_shopping.Filter;
 
 import com.example.project_shopping.Constant.ApplicationConstants;
+import com.example.project_shopping.Exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -14,6 +15,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,6 +23,7 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class JWTValidatorFilter extends OncePerRequestFilter {
     @Override
@@ -30,7 +33,6 @@ public class JWTValidatorFilter extends OncePerRequestFilter {
             for (Cookie cookie : request.getCookies()) {
                 if ("cookieJWT".equals(cookie.getName())) {
                     jwt = cookie.getValue();
-                    System.out.println("start");
                     break;
                 }
             }
@@ -38,7 +40,6 @@ public class JWTValidatorFilter extends OncePerRequestFilter {
 
         if (jwt != null) {
             try {
-            System.out.println("in");
                 Environment env = getEnvironment();
                 if (env != null) {
                     String secret = env.getProperty(ApplicationConstants.JWT_SECRET_KEY, ApplicationConstants.JWT_SECRET_DEFAULT_VALUE);
@@ -50,18 +51,32 @@ public class JWTValidatorFilter extends OncePerRequestFilter {
                                 .parseSignedClaims(jwt)
                                 .getPayload();
 
-                        String username = String.valueOf(claims.get("username"));
+                        Integer userId = (Integer) claims.get("userID");
                         String authorities = String.valueOf(claims.get("authorities"));
                         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                username, null,
-                                AuthorityUtils.commaSeparatedStringToAuthorityList(authorities)
+                                userId, null,
+//                                AuthorityUtils.commaSeparatedStringToAuthorityList(authorities)
+                                Collections.singleton(new SimpleGrantedAuthority(authorities))
                         );
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }
             } catch (Exception exception) {
-                System.out.println("out");
-                throw new BadCredentialsException("Invalid Token received!");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+
+                String body = """
+                    {
+                      "timestamp": "%s",
+                      "status": 401,
+                      "error": "Unauthorized",
+                      "message": "You are not logged in, please login again!"
+                    }
+                    """.formatted(java.time.LocalDateTime.now());
+
+                response.getWriter().write(body);
+                return;
             }
         }
         filterChain.doFilter(request,response);

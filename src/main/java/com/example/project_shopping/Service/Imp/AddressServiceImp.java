@@ -8,6 +8,7 @@ import com.example.project_shopping.Mapper.AddressMapper;
 import com.example.project_shopping.Repository.AddressRepository;
 import com.example.project_shopping.Repository.UserRepository;
 import com.example.project_shopping.Service.AddressService;
+import com.example.project_shopping.Util.Auth;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,9 +26,10 @@ public class AddressServiceImp implements AddressService {
     private AddressMapper addressMapper;
 
     @Override
-    public AddressDTO createAddress(Integer userId, AddressDTO addressDTO) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+    public AddressDTO createAddress(AddressDTO addressDTO) {
+        Integer userID = Auth.getCurrentUserID();
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
 
         Address address = addressMapper.toEntity(addressDTO);
         address.setUser(user);
@@ -37,14 +39,20 @@ public class AddressServiceImp implements AddressService {
     }
 
     @Override
-    public List<AddressDTO> getAddressByUserId(Long userId) {
-        List<Address> addresses = addressRepository.findAllByUserId(userId);
+    public List<AddressDTO> getAddressByUserId() {
+        Integer userID = Auth.getCurrentUserID();
+        System.out.println(userID);
+        List<Address> addresses = addressRepository.findAllByUserId(Long.valueOf(userID));
         return addresses.stream().map(addressMapper::toDTO).collect(Collectors.toList());
     }
 
 
     @Override
     public AddressDTO updateAddressByUserId(AddressDTO addressDTO, Integer addressID) {
+        Integer userID = Auth.getCurrentUserID();
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
+
         Address existingAddress = addressRepository.findById(addressID)
                 .orElseThrow(() -> new EntityNotFoundException("Address not found with ID: " + addressID));
 

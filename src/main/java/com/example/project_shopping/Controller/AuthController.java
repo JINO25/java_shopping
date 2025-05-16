@@ -17,10 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -48,7 +45,8 @@ public class AuthController {
             return new ResponseEntity<>("Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
 
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword()));
+        Authentication authentication = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String token = jwt.createJWT(authentication,env);
@@ -58,4 +56,10 @@ public class AuthController {
         return new ResponseEntity<>(token, HttpStatus.OK);
     }
 
+    @GetMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response){
+        Cookie cookie = cookieGenerate.generateExpiredCookie();
+        response.addCookie(cookie);
+        return new ResponseEntity<>(cookie,HttpStatus.OK);
+    }
 }
