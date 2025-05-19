@@ -1,5 +1,6 @@
 package com.example.project_shopping.Entity;
 
+import com.example.project_shopping.Enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -28,9 +29,10 @@ public class Bill {
     @Column(name = "method", length = 45)
     private String method;
 
-    @Size(max = 45)
-    @Column(name = "status", length = 45)
-    private String status;
+
+    @Column(name = "payment_status", length = 45)
+    @Enumerated(value = EnumType.STRING)
+    private PaymentStatus paymentStatus;
 
     @Column(name = "payment_time")
     private LocalDate paymentTime;

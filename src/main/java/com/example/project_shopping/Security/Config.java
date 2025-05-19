@@ -32,6 +32,7 @@ import java.util.Collections;
 public class Config {
     private final AuthenticationProvider authenticationProvider;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public static PasswordEncoder passwordEncoder(){
@@ -71,10 +72,16 @@ public class Config {
                             .requestMatchers("/product/create").hasRole("SELLER")
                             .requestMatchers("/product/update/**").hasRole("SELLER")
                             .requestMatchers("/product/delete/**").hasAnyRole("SELLER","ADMIN")
-                            .requestMatchers("/user/**","/addresses").authenticated()
+                            .requestMatchers(HttpMethod.GET,"/order/my").hasRole("USER")
+                            .requestMatchers(HttpMethod.GET,"/order/**").hasAnyRole("SELLER","ADMIN")
+                            .requestMatchers("/order/*/status").hasRole("SELLER")
+                            .requestMatchers("/order/delete/**").hasRole("SELLER")
+                            .requestMatchers("/order/*/cancel").hasRole("USER")
+                            .requestMatchers("/user/**","/addresses", "/order/**").authenticated()
                             .anyRequest().authenticated();
                 })
                 .exceptionHandling((ex)->{
+                    ex.authenticationEntryPoint(customAuthenticationEntryPoint);
                     ex.accessDeniedHandler(customAccessDeniedHandler);
                 })
                 .csrf().disable();

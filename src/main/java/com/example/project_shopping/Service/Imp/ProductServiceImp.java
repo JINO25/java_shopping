@@ -47,16 +47,12 @@ public class ProductServiceImp implements ProductService {
 
     @Override
     public List<ProductDTO> findProductByCategory(String name){
-        try {
         Category category = categoryRepository.findByName(name);
         if(category == null) throw new EntityNotFoundException("Category: "+ name+" not found!");
         List<Product> product = productRepository.findProductByCategory(category);
         System.out.println("Found products: " + product.size());
         return productMapper.toProductDTOList(product);
-        }catch (Exception e){
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi mapping ProductDTO: " + e.getMessage());
-        }
+
     }
 
     @Override
@@ -81,7 +77,7 @@ public class ProductServiceImp implements ProductService {
         product.setCategory(category);
 
         User user = userRepository.findById(userID)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         product.setUser(user);
 
 

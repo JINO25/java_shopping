@@ -2,6 +2,7 @@ package com.example.project_shopping.Util;
 
 import com.example.project_shopping.Entity.User;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;

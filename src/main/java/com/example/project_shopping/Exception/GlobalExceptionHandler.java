@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,4 +38,24 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(OutOfStockException.class)
+    public ResponseEntity<?> handleOutOfStockException(OutOfStockException ex) {
+        return new ResponseEntity<>(Map.of(
+                "error", "OUT_OF_STOCK",
+                "message", ex.getMessage()
+        ), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PermissionDeniedException.class)
+    public ResponseEntity<?> handlePermissionDeniedException(PermissionDeniedException ex) {
+        return new ResponseEntity<>(Map.of(
+                "error", "FORBIDDEN",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now()
+        ), HttpStatus.FORBIDDEN);
+    }
+
+
+
 }

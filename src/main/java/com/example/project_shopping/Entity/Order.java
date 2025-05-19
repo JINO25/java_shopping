@@ -1,5 +1,6 @@
 package com.example.project_shopping.Entity;
 
+import com.example.project_shopping.Enums.OrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -21,6 +22,10 @@ public class Order {
 
     @Column(name = "order_date")
     private LocalDate orderDate;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

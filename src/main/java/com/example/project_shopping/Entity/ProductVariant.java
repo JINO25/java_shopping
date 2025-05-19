@@ -40,7 +40,7 @@ public class ProductVariant {
     @JsonIgnore
     private Product product;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "productVariant")
     private Set<OrderDetail> orderDetails = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
