@@ -11,6 +11,9 @@ import java.util.List;
 public interface UserService {
     List<UserResponseDTO> findAllUsers();
     UserResponseDTO createUser(CreateUserDTO createUserDTO);
+    UserResponseDTO createAdmin(CreateUserDTO createUserDTO);
+    UserResponseDTO createSeller(CreateUserDTO createUserDTO);
+
 
     UserResponseDTO findById(Integer id);
 

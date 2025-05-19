@@ -64,5 +64,32 @@ public class UserController {
         return new ResponseEntity<>("Delete successfully", HttpStatus.OK);
     }
 
+    @PostMapping("/create/admin")
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody CreateUserDTO createUserDTO, BindingResult bindingResult) {
+        if(bindingResult.hasErrors()){
+            StringBuilder errorMsg = new StringBuilder();
+            bindingResult.getAllErrors().forEach(e->{
+                errorMsg.append(e.getDefaultMessage()).append("\n");
+            });
+            return new ResponseEntity<>(errorMsg, HttpStatus.BAD_REQUEST);
+        }
+        UserResponseDTO response = userService.createAdmin(createUserDTO);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/create/seller")
+    public ResponseEntity<?> createSeller(@Valid @RequestBody CreateUserDTO createUserDTO, BindingResult bindingResult) {
+        if(bindingResult.hasErrors()){
+            StringBuilder errorMsg = new StringBuilder();
+            bindingResult.getAllErrors().forEach(e->{
+                errorMsg.append(e.getDefaultMessage()).append("\n");
+            });
+            return new ResponseEntity<>(errorMsg, HttpStatus.BAD_REQUEST);
+        }
+        UserResponseDTO response = userService.createSeller(createUserDTO);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+    }
+
 
 }

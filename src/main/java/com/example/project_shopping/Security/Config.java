@@ -67,16 +67,25 @@ public class Config {
                     author.requestMatchers("/user/create","/auth/login").permitAll()
                             .requestMatchers(HttpMethod.GET,"/product/**").permitAll()
                             .requestMatchers(HttpMethod.GET,"/categories/**").permitAll()
+                            //user
                             .requestMatchers(HttpMethod.GET,"/user").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE,"/user/**").hasAnyRole("ADMIN","USER")
+                            .requestMatchers("/user/create/admin","/user/create/seller").hasRole("ADMIN")
+                            //product
                             .requestMatchers("/product/create").hasRole("SELLER")
                             .requestMatchers("/product/update/**").hasRole("SELLER")
                             .requestMatchers("/product/delete/**").hasAnyRole("SELLER","ADMIN")
+                            //order
                             .requestMatchers(HttpMethod.GET,"/order/my").hasRole("USER")
                             .requestMatchers(HttpMethod.GET,"/order/**").hasAnyRole("SELLER","ADMIN")
                             .requestMatchers("/order/*/status").hasRole("SELLER")
                             .requestMatchers("/order/delete/**").hasRole("SELLER")
                             .requestMatchers("/order/*/cancel").hasRole("USER")
+                            //bill
+                            .requestMatchers("/bills/user").hasRole("USER")
+                            .requestMatchers("/bills/seller", "/bills/update").hasRole("SELLER")
+                            .requestMatchers("/bills/**").hasRole("ADMIN")
+                            //general
                             .requestMatchers("/user/**","/addresses", "/order/**").authenticated()
                             .anyRequest().authenticated();
                 })

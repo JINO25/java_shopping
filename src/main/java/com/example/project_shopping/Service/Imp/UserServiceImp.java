@@ -127,4 +127,80 @@ public class UserServiceImp implements UserService {
         userRepository.delete(user);
     }
 
+    @Override
+    public UserResponseDTO createAdmin(CreateUserDTO createUserDTO) {
+        User user = userMapper.toEntity(createUserDTO);
+        Optional<User> existingUser = userRepository.findUserByEmail(user.getEmail());
+        if(existingUser.isPresent()) {
+            System.out.println("Email already exists: " + user.getEmail());
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
+
+        Role defaultRole = roleRepository.findByRole("ROLE_ADMIN");
+        if (defaultRole == null) {
+            defaultRole = new Role();
+            defaultRole.setRole("ROLE_ADMIN");
+            roleRepository.save(defaultRole);
+        }
+        user.setRole(defaultRole);
+        user.setPassword(passwordEncoder.encode(createUserDTO.getPassword()));
+
+        user = userRepository.save(user);
+
+        Address address = new Address();
+        address.setCity(createUserDTO.getCity());
+        address.setCountry(createUserDTO.getCountry());
+        address.setStreet(createUserDTO.getStreet());
+        address.setPhoneNumber(createUserDTO.getPhoneNumber());
+        address.setUser(user);
+
+        if(user.getAddresses() == null){
+            user.setAddresses(new LinkedHashSet<>());
+        }
+
+        user.getAddresses().add(address);
+        addressRepository.save(address);
+        cartService.createCart(user);
+
+        return userMapper.toResponseDTO(user);
+    }
+
+    @Override
+    public UserResponseDTO createSeller(CreateUserDTO createUserDTO) {
+        User user = userMapper.toEntity(createUserDTO);
+        Optional<User> existingUser = userRepository.findUserByEmail(user.getEmail());
+        if(existingUser.isPresent()) {
+            System.out.println("Email already exists: " + user.getEmail());
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
+
+        Role defaultRole = roleRepository.findByRole("ROLE_SELLER");
+        if (defaultRole == null) {
+            defaultRole = new Role();
+            defaultRole.setRole("ROLE_SELLER");
+            roleRepository.save(defaultRole);
+        }
+        user.setRole(defaultRole);
+        user.setPassword(passwordEncoder.encode(createUserDTO.getPassword()));
+
+        user = userRepository.save(user);
+
+        Address address = new Address();
+        address.setCity(createUserDTO.getCity());
+        address.setCountry(createUserDTO.getCountry());
+        address.setStreet(createUserDTO.getStreet());
+        address.setPhoneNumber(createUserDTO.getPhoneNumber());
+        address.setUser(user);
+
+        if(user.getAddresses() == null){
+            user.setAddresses(new LinkedHashSet<>());
+        }
+
+        user.getAddresses().add(address);
+        addressRepository.save(address);
+        cartService.createCart(user);
+
+        return userMapper.toResponseDTO(user);
+    }
+
 }

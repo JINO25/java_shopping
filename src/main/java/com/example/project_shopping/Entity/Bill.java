@@ -22,7 +22,7 @@ public class Bill {
     @Column(name = "total")
     private Double total;
 
-    @Column(name = "billDate")
+    @Column(name = "bill_date")
     private LocalDate billDate;
 
     @Size(max = 45)

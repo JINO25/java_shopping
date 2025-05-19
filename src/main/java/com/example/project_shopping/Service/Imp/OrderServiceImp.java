@@ -3,20 +3,15 @@ package com.example.project_shopping.Service.Imp;
 import com.example.project_shopping.DTO.Order.OrderDTO;
 import com.example.project_shopping.DTO.Order.OrderDetailDTO;
 import com.example.project_shopping.DTO.Order.OrderDetailReqDTO;
-import com.example.project_shopping.Entity.Order;
-import com.example.project_shopping.Entity.OrderDetail;
-import com.example.project_shopping.Entity.ProductVariant;
-import com.example.project_shopping.Entity.User;
+import com.example.project_shopping.Entity.*;
 import com.example.project_shopping.Enums.OrderStatus;
+import com.example.project_shopping.Enums.PaymentStatus;
 import com.example.project_shopping.Exception.EntityNotFoundException;
 import com.example.project_shopping.Exception.InvalidTokenException;
 import com.example.project_shopping.Exception.OutOfStockException;
 import com.example.project_shopping.Exception.PermissionDeniedException;
 import com.example.project_shopping.Mapper.OrderMapper;
-import com.example.project_shopping.Repository.OrderDetailRepository;
-import com.example.project_shopping.Repository.OrderRepository;
-import com.example.project_shopping.Repository.ProductVariantRepository;
-import com.example.project_shopping.Repository.UserRepository;
+import com.example.project_shopping.Repository.*;
 import com.example.project_shopping.Service.OrderService;
 import com.example.project_shopping.Util.Auth;
 import lombok.AllArgsConstructor;
@@ -34,6 +29,7 @@ public class OrderServiceImp implements OrderService {
     private OrderDetailRepository orderDetailRepository;
     private UserRepository userRepository;
     private ProductVariantRepository productVariantRepository;
+    private BillRepository billRepository;
     private OrderMapper orderMapper;
 
     @Override
@@ -70,6 +66,15 @@ public class OrderServiceImp implements OrderService {
         order.setOrderDetails(Collections.singletonList(orderDetail));
 
         order = orderRepository.save(order);
+
+        Bill bill = new Bill();
+        bill.setOrder(order);
+        bill.setBillDate(LocalDate.now());
+        bill.setMethod("COD");
+        bill.setPaymentStatus(PaymentStatus.UNPAID);
+        bill.setTotal(orderDetail.getPrice() * orderDetail.getQuantity());
+
+        billRepository.save(bill);
 
         return orderMapper.toOrderDTO(order);
     }
@@ -113,6 +118,18 @@ public class OrderServiceImp implements OrderService {
 
         order.setOrderDetails(orderDetails);
         order = orderRepository.save(order);
+
+        Double total = orderDetails.stream()
+                .mapToDouble(odr->odr.getPrice()*odr.getQuantity()).sum();
+
+        Bill bill = new Bill();
+        bill.setOrder(order);
+        bill.setBillDate(LocalDate.now());
+        bill.setMethod("COD");
+        bill.setPaymentStatus(PaymentStatus.UNPAID);
+        bill.setTotal(total);
+
+        billRepository.save(bill);
 
         return orderMapper.toOrderDTO(order);
     }
