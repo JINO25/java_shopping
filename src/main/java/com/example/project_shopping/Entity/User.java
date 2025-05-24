@@ -35,7 +35,7 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "photo", length = 45)
+    @Column(name = "photo")
     private String photo;
 
     @Column(name = "createAt")
@@ -71,7 +71,7 @@ public class User {
         }
 
         if (this.photo == null || this.photo.isEmpty()) {
-            this.photo = "default-photo.jpg";
+            this.photo = "https://res.cloudinary.com/dtigntgqf/image/upload/v1740581527/arymd2vryah7oys6o6b0.jpg";
         }
     }
 }

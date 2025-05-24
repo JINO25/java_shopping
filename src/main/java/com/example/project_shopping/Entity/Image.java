@@ -20,6 +20,8 @@ public class Image {
     @Column(name = "url", nullable = false)
     private String url;
 
+    @Column(name = "public_id", nullable = false)
+    private String publicId;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)

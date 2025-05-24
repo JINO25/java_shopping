@@ -1,5 +1,6 @@
 package com.example.project_shopping.Controller;
 
+import com.example.project_shopping.DTO.Order.CartItemeqDTO;
 import com.example.project_shopping.DTO.Order.OrderDTO;
 import com.example.project_shopping.DTO.Order.OrderDetailReqDTO;
 import com.example.project_shopping.Enums.OrderStatus;
@@ -8,11 +9,9 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
 
@@ -96,5 +95,15 @@ public class OrderControlle {
         return ResponseEntity.ok(Map.of("message", "Order cancelled successfully"));
     }
 
+    @PostMapping("/checkout")
+    public ResponseEntity<?> createOrderFromCart(@Valid @RequestBody CartItemeqDTO cartItemeqDTO, BindingResult bindingResult){
+        if (bindingResult.hasErrors()){
+            StringBuilder msg = new StringBuilder();
+            bindingResult.getAllErrors().forEach(e->msg.append(e.getDefaultMessage()).append("\n"));
+            return new ResponseEntity<>(msg,HttpStatus.BAD_REQUEST);
+        }
+        OrderDTO orderDTO = orderService.createOrderFromCart(cartItemeqDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderDTO);
+    }
 
 }

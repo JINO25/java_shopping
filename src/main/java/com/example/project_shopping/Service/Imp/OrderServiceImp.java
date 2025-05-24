@@ -1,9 +1,10 @@
 package com.example.project_shopping.Service.Imp;
 
+import com.example.project_shopping.DTO.Order.CartItemeqDTO;
 import com.example.project_shopping.DTO.Order.OrderDTO;
-import com.example.project_shopping.DTO.Order.OrderDetailDTO;
 import com.example.project_shopping.DTO.Order.OrderDetailReqDTO;
 import com.example.project_shopping.Entity.*;
+import com.example.project_shopping.Enums.CartStatus;
 import com.example.project_shopping.Enums.OrderStatus;
 import com.example.project_shopping.Enums.PaymentStatus;
 import com.example.project_shopping.Exception.EntityNotFoundException;
@@ -31,6 +32,7 @@ public class OrderServiceImp implements OrderService {
     private ProductVariantRepository productVariantRepository;
     private BillRepository billRepository;
     private OrderMapper orderMapper;
+    private CartItemRepository cartItemRepository;
 
     @Override
     public OrderDTO createOrder(OrderDetailReqDTO orderDetailReqDTO) {
@@ -209,5 +211,65 @@ public class OrderServiceImp implements OrderService {
             throw new PermissionDeniedException("You are not allowed to cancel this order!");
         }
         orderRepository.delete(order);
+    }
+
+    @Override
+    public OrderDTO createOrderFromCart(CartItemeqDTO cartItemeqDTO) {
+        Integer userID = Auth.getCurrentUserID();
+        if(userID == null){
+            throw new InvalidTokenException("Please login againt!");
+        }
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
+
+        Order order = new Order();
+        order.setOrderDate(LocalDate.now());
+        order.setOrderStatus(OrderStatus.PENDING);
+        order.setUser(user);
+
+        List<OrderDetail> orderDetails = new ArrayList<>();
+
+        for(Integer i : cartItemeqDTO.getCartItemIds()){
+        CartItem cartItem = cartItemRepository.findById(i)
+                .orElseThrow(()->new EntityNotFoundException("Cart item not found!"));
+
+        ProductVariant productVariant = productVariantRepository.findById(cartItem.getProduct().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + cartItem.getProduct().getId()));
+
+            if (productVariant.getStock() < cartItem.getQuantity()) {
+                throw new OutOfStockException("Not enough stock for variant ID: " + productVariant.getId());
+            }
+
+            productVariant.setStock(productVariant.getStock() - cartItem.getQuantity());
+
+            OrderDetail orderDetail = new OrderDetail();
+            orderDetail.setPrice(productVariant.getPrice());
+            orderDetail.setQuantity(cartItem.getQuantity());
+            orderDetail.setOrder(order);
+            orderDetail.setProductVariant(productVariant);
+
+            orderDetails.add(orderDetail);
+            cartItem.setStatus(CartStatus.CHECKD_OUT);
+            cartItemRepository.save(cartItem);
+        }
+
+
+        order.setOrderDetails(orderDetails);
+
+        order = orderRepository.save(order);
+
+        Double total = orderDetails.stream()
+                .mapToDouble(odr->odr.getPrice()*odr.getQuantity()).sum();
+
+        Bill bill = new Bill();
+        bill.setOrder(order);
+        bill.setBillDate(LocalDate.now());
+        bill.setMethod("COD");
+        bill.setPaymentStatus(PaymentStatus.UNPAID);
+        bill.setTotal(total);
+
+        billRepository.save(bill);
+
+        return orderMapper.toOrderDTO(order);
     }
 }

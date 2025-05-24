@@ -1,11 +1,10 @@
 package com.example.project_shopping.Service;
 
+import com.example.project_shopping.DTO.Order.CartItemeqDTO;
 import com.example.project_shopping.DTO.Order.OrderDTO;
-import com.example.project_shopping.DTO.Order.OrderDetailDTO;
 import com.example.project_shopping.DTO.Order.OrderDetailReqDTO;
 import com.example.project_shopping.Enums.OrderStatus;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 public interface OrderService {
@@ -18,4 +17,6 @@ public interface OrderService {
     OrderDTO updateStatusOrder(Integer orderID, OrderStatus orderStatus);
     void deleteOrder(Integer orderID);
     void cancelOrderByUser(Integer orderID);
+
+    OrderDTO createOrderFromCart(CartItemeqDTO cartItemeqDTO);
 }

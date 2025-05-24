@@ -45,6 +45,7 @@ public class CartMapper {
         CartItemDTO cartItemDTO = new CartItemDTO();
         cartItemDTO.setId(cartItem.getId());
         cartItemDTO.setQuantity(cartItem.getQuantity());
+        cartItemDTO.setCartStatus(cartItem.getStatus());
 
         ProductVariant productVariant = cartItem.getProduct();
         ProductVariantCartDTO productVariantCartDTO = new ProductVariantCartDTO();
