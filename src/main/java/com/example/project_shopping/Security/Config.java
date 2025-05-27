@@ -81,10 +81,14 @@ public class Config {
                             .requestMatchers("/order/*/status").hasRole("SELLER")
                             .requestMatchers("/order/delete/**").hasRole("SELLER")
                             .requestMatchers("/order/*/cancel").hasRole("USER")
+                            //cart
+                            .requestMatchers("/cart/**").hasRole("USER")
                             //bill
                             .requestMatchers("/bills/user").hasRole("USER")
                             .requestMatchers("/bills/seller", "/bills/update").hasRole("SELLER")
                             .requestMatchers("/bills/**").hasRole("ADMIN")
+                            //image
+                            .requestMatchers("/images/**").hasAnyRole("ADMIN","SELLER","USER")
                             //general
                             .requestMatchers("/user/**","/addresses", "/order/**").authenticated()
                             .anyRequest().authenticated();
