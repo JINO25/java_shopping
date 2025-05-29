@@ -31,7 +31,7 @@ public class JWTValidatorFilter extends OncePerRequestFilter {
         String jwt = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("cookieJWT".equals(cookie.getName())) {
+                if (ApplicationConstants.accessCookie.equals(cookie.getName())) {
                     jwt = cookie.getValue();
                     break;
                 }
@@ -52,13 +52,18 @@ public class JWTValidatorFilter extends OncePerRequestFilter {
                                 .getPayload();
 
                         Integer userId = (Integer) claims.get("userID");
+                        String email = claims.getSubject();
                         String authorities = String.valueOf(claims.get("authorities"));
-                        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                userId, null,
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                email, null,
 //                                AuthorityUtils.commaSeparatedStringToAuthorityList(authorities)
                                 Collections.singleton(new SimpleGrantedAuthority(authorities))
                         );
+                        authentication.setDetails(userId);
                         SecurityContextHolder.getContext().setAuthentication(authentication);
+//                        System.out.println("JWTVa Name: "+authentication.getName());
+//                        System.out.println("JWTVa Principal: "+authentication.getPrincipal());
+//                        System.out.println("JWTVa details: "+authentication.getDetails());
                     }
                 }
             } catch (Exception exception) {

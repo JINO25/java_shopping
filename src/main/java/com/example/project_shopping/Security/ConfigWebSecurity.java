@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,12 +22,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 @AllArgsConstructor
-public class Config {
+public class ConfigWebSecurity {
     private final AuthenticationProvider authenticationProvider;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
@@ -53,7 +52,7 @@ public class Config {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration config = new CorsConfiguration();
-                        config.setAllowedOrigins(Collections.singletonList("http://localhost:8080"));
+                        config.setAllowedOrigins(List.of("http://localhost:8080","http://127.0.0.1:5500"));
                         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
                         config.setAllowCredentials(true);
                         config.setAllowedHeaders(Collections.singletonList("*"));
@@ -64,9 +63,13 @@ public class Config {
                 }))
                 .addFilterBefore(new JWTValidatorFilter(), BasicAuthenticationFilter.class)
                 .authorizeHttpRequests((author)->{
-                    author.requestMatchers("/user/create","/auth/login").permitAll()
+                    author.requestMatchers("/user/create","/auth/**").permitAll()
                             .requestMatchers(HttpMethod.GET,"/product/**").permitAll()
                             .requestMatchers(HttpMethod.GET,"/categories/**").permitAll()
+                            .requestMatchers("/order/payment-success").permitAll()
+                            .requestMatchers("/order/payment-success-list").permitAll()
+
+
                             //user
                             .requestMatchers(HttpMethod.GET,"/user").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE,"/user/**").hasAnyRole("ADMIN","USER")

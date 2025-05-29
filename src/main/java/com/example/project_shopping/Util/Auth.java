@@ -7,8 +7,7 @@ public class Auth {
     public static Integer getCurrentUserID(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(authentication != null){
-//            System.out.println(authentication.getAuthorities());
-            return (Integer) authentication.getPrincipal();
+            return (Integer) authentication.getDetails();
         }
         return null;
     }

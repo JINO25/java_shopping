@@ -20,12 +20,10 @@ public class Product {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Size(max = 45)
-    @Column(name = "name", length = 45)
+    @Column(name = "name")
     private String name;
 
-    @Size(max = 45)
-    @Column(name = "description", length = 45)
+    @Column(name = "description")
     private String description;
 
     @NotNull

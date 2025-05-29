@@ -25,14 +25,22 @@ public class AuthenticationProvider implements org.springframework.security.auth
         String email = authentication.getName();
         String pwd = authentication.getCredentials().toString();
         User user = userRepository.findByEmail(email);
-
+//        System.out.println("Au Name: "+authentication.getName());
+//        System.out.println("Au Principal: "+authentication.getPrincipal());
         if (user != null){
             if (passwordEncoder.matches(pwd,user.getPassword())){
-                return new UsernamePasswordAuthenticationToken(
-                        user.getId(),
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                        email,
                         null,
                         Collections.singleton(new SimpleGrantedAuthority(user.getRole().getRole()))
                 );
+                usernamePasswordAuthenticationToken.setDetails(user.getId());
+                return usernamePasswordAuthenticationToken;
+//                return new UsernamePasswordAuthenticationToken(
+//                        email,
+//                        null,
+//                        Collections.singleton(new SimpleGrantedAuthority(user.getRole().getRole()))
+//                );
             }else{
                 throw new BadCredentialsException("Email or password is incorrect!");
             }

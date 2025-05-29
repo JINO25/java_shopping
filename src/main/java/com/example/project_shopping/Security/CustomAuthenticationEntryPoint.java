@@ -22,6 +22,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                   "error": "Unauthorized",
                   "message": "%s"
                 }
-                """.formatted(java.time.LocalDateTime.now(), authException.getMessage()));
+                """.formatted(java.time.LocalDateTime.now(), "You are not logged in, please login again!"));
     }
 }
