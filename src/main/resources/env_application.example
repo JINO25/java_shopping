@@ -1,0 +1,43 @@
+spring.application.name=
+server.port=8090
+spring.datasource.url=
+spring.datasource.username=
+spring.datasource.password=
+
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+
+#JWT config
+jwt.secret.key=
+jwt.expires=
+jwt.header=
+jwt.default.value=
+jwt.refreshToken=
+#Time for token
+cookie.accessToken=
+cookie.refreshToken=
+#Cloudinary
+CLOUDINARY_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_SECRET_KEY=
+
+# Stripe key
+STRIPE_SECRET_KEY =
+STRIPE_PUBLIC_KEY =
+
+# Mail Services
+spring.mail.email=
+spring.mail.host=
+spring.mail.port=
+spring.mail.username=
+spring.mail.password=
+spring.mail.protocol=
+spring.mail.properties.mail.smtp.auth=
+spring.mail.properties.mail.smtp.starttls.enable=
+spring.mail.default-encoding=
+
+#host
+spring.host=localhost:8080
+#Name cookie token
+spring.accessToken=accessToken
+spring.refreshToken=refreshToken
