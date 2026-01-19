@@ -32,7 +32,7 @@ public class ProductServiceImp implements ProductService {
 
     @Override
     public List<ProductDTO> findAll() {
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findAllWithImages();
 
         List<ProductDTO> productDTOs = productMapper.toProductDTOList(products);
 

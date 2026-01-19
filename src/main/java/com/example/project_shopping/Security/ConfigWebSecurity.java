@@ -52,7 +52,7 @@ public class ConfigWebSecurity {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration config = new CorsConfiguration();
-                        config.setAllowedOrigins(List.of("http://localhost:8080","http://127.0.0.1:5500"));
+                        config.setAllowedOrigins(List.of("http://localhost:8080","http://127.0.0.1:5500", "http://localhost:5173"));
                         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
                         config.setAllowCredentials(true);
                         config.setAllowedHeaders(Collections.singletonList("*"));
@@ -64,6 +64,7 @@ public class ConfigWebSecurity {
                 .addFilterBefore(new JWTValidatorFilter(), BasicAuthenticationFilter.class)
                 .authorizeHttpRequests((author)->{
                     author.requestMatchers("/user/create","/auth/**").permitAll()
+//                            .requestMatchers("/actuator/**").permitAll()
                             .requestMatchers(HttpMethod.GET,"/product/**").permitAll()
                             .requestMatchers(HttpMethod.GET,"/categories/**").permitAll()
                             .requestMatchers("/order/payment-success").permitAll()

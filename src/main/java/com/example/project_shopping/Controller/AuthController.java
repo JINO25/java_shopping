@@ -1,8 +1,8 @@
 package com.example.project_shopping.Controller;
 
-import com.example.project_shopping.DTO.Auth.LoginDTO;
-import com.example.project_shopping.DTO.Auth.PassResetDTO;
-import com.example.project_shopping.DTO.Auth.PassResetReq;
+import com.example.project_shopping.DTO.Auth.*;
+import com.example.project_shopping.Entity.User;
+import com.example.project_shopping.Repository.UserRepository;
 import com.example.project_shopping.Service.AuthService;
 import com.example.project_shopping.Util.Cookie_Generate;
 import com.example.project_shopping.Util.JWT;
@@ -31,6 +31,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AuthController {
     private AuthService authService;
+    private UserRepository userRepository;
     private AuthenticationManager authenticationManager;
     private JWT jwt;
     private Environment env;
@@ -141,4 +142,56 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe(HttpServletResponse response){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = authentication.getPrincipal().toString();
+
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(new UserAuthDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhoto(),
+                user.getRole().getRole()
+        ));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        try {
+            authService.register(request);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body("Đăng ký thành công");
+        } catch (RuntimeException e) {
+
+            if ("EMAIL_EXISTS".equals(e.getMessage())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("Email đã tồn tại");
+            }
+
+            if ("ROLE_NOT_FOUND".equals(e.getMessage())) {
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Role USER không tồn tại");
+            }
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Register failed");
+        }
+    }
 }
