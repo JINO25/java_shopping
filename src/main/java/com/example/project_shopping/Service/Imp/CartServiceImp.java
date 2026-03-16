@@ -44,7 +44,7 @@ public class CartServiceImp implements CartService {
     @Override
     public List<CartDTO> getCartForCurrentUser() {
         Integer userId = Auth.getCurrentUserID();
-        List<Cart> cartList = cartRepository.findByUserId(userId);
+        List<Cart> cartList = cartRepository.findByUserIdWithProduct(userId);
         if (cartList.isEmpty()) {
             return Collections.emptyList();
         }

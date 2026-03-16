@@ -5,6 +5,7 @@ import com.example.project_shopping.DTO.Cart.CartItemDTO;
 import com.example.project_shopping.DTO.Cart.ProductVariantCartDTO;
 import com.example.project_shopping.Entity.Cart;
 import com.example.project_shopping.Entity.CartItem;
+import com.example.project_shopping.Entity.Image;
 import com.example.project_shopping.Entity.ProductVariant;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -72,6 +73,7 @@ public class CartMapper {
         productVariantCartDTO.setPrice(productVariant.getPrice());
 
         cartItemDTO.setProductVariantCartDTO(productVariantCartDTO);
+        cartItemDTO.setImage(productVariant.getProduct().getImages().stream().findFirst().map(Image::getUrl).orElse(""));
         return cartItemDTO;
     }
 }

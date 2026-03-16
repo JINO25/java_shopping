@@ -11,5 +11,6 @@ public class CartItemDTO {
     private Integer quantity;
     private CartStatus cartStatus;
     private ProductVariantCartDTO productVariantCartDTO;
+    private String image;
 
 }
