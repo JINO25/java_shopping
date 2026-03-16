@@ -10,8 +10,7 @@ import com.stripe.exception.StripeException;
 import java.util.List;
 
 public interface OrderService {
-    OrderDTO createOrder(OrderDetailReqDTO orderDetailReqDTO);
-    OrderDTO createOrderList(List<OrderDetailReqDTO> orderDetailReqDTOList);
+    OrderDTO createOrder(List<OrderDetailReqDTO> orderDetailReqDTOList);
     List<OrderDTO> getALlOrders();
     List<OrderDTO> getALlOrdersForSeller();
     List<OrderDTO> getALlOrdersOfUser();
@@ -22,9 +21,8 @@ public interface OrderService {
 
     OrderDTO createOrderFromCart(CartItemeqDTO cartItemeqDTO);
 
-    String createCheckoutSession(OrderDetailReqDTO orderDetailReqDTO) throws StripeException;
-    String createCheckoutSessionList(List<OrderDetailReqDTO> orderDetailReqDTOList) throws StripeException, JsonProcessingException;
-    OrderDTO createOrderWithStripe(OrderDetailReqDTO orderDetailReqDTO);
+    String createCheckoutSession(List<OrderDetailReqDTO> orderDetailReqDTOList)
+            throws StripeException, JsonProcessingException;
 
-    OrderDTO createOrderListWithStripe(List<OrderDetailReqDTO> orderDetailReqDTOList);
+    OrderDTO createOrderWithStripe(List<OrderDetailReqDTO> orderDetailReqDTOList, String sessionId);
 }

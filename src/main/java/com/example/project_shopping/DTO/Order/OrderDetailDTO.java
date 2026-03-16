@@ -10,6 +10,7 @@ import java.util.List;
 @Setter
 public class OrderDetailDTO {
     private Integer id;
+    private Long addressId;
     private Integer quantity;
     private Double price;
     private ProductVariantOrderDTO productVariantOrderDTO;

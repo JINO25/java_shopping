@@ -63,22 +63,22 @@ public class ConfigWebSecurity {
                 }))
                 .addFilterBefore(new JWTValidatorFilter(), BasicAuthenticationFilter.class)
                 .authorizeHttpRequests((author)->{
-                    author.requestMatchers("/user/create","/auth/**").permitAll()
+                    author.requestMatchers("/users/create","/auth/**").permitAll()
 //                            .requestMatchers("/actuator/**").permitAll()
-                            .requestMatchers(HttpMethod.GET,"/product/**").permitAll()
+                            .requestMatchers(HttpMethod.GET,"/products/**").permitAll()
                             .requestMatchers(HttpMethod.GET,"/categories/**").permitAll()
                             .requestMatchers("/order/payment-success").permitAll()
                             .requestMatchers("/order/payment-success-list").permitAll()
 
 
                             //user
-                            .requestMatchers(HttpMethod.GET,"/user").hasRole("ADMIN")
-                            .requestMatchers(HttpMethod.DELETE,"/user/**").hasAnyRole("ADMIN","USER")
-                            .requestMatchers("/user/create/admin","/user/create/seller").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET,"/users").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.DELETE,"/users/**").hasAnyRole("ADMIN","USER")
+                            .requestMatchers("/users/create/admin","/users/create/seller").hasRole("ADMIN")
                             //product
-                            .requestMatchers("/product/create").hasRole("SELLER")
-                            .requestMatchers("/product/update/**").hasRole("SELLER")
-                            .requestMatchers("/product/delete/**").hasAnyRole("SELLER","ADMIN")
+                            .requestMatchers("/products/create").hasRole("SELLER")
+                            .requestMatchers("/products/update/**").hasRole("SELLER")
+                            .requestMatchers("/products/delete/**").hasAnyRole("SELLER","ADMIN")
                             //order
                             .requestMatchers(HttpMethod.GET,"/order/my").hasRole("USER")
                             .requestMatchers(HttpMethod.GET,"/order/**").hasAnyRole("SELLER","ADMIN")
@@ -94,7 +94,7 @@ public class ConfigWebSecurity {
                             //image
                             .requestMatchers("/images/**").hasAnyRole("ADMIN","SELLER","USER")
                             //general
-                            .requestMatchers("/user/**","/addresses", "/order/**").authenticated()
+                            .requestMatchers("/users/**","/addresses", "/order/**").authenticated()
                             .anyRequest().authenticated();
                 })
                 .exceptionHandling((ex)->{

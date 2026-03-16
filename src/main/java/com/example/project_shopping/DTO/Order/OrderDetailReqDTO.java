@@ -10,7 +10,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class OrderDetailReqDTO {
+    private Integer addressId;
     private Integer productVariantId;
+    private Integer orderId;
     @NotNull(message = "Order must have quantity")
     @Min(value = 1, message = "quantity must be least 1")
     private Integer quantity;

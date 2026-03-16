@@ -19,25 +19,41 @@ import java.util.stream.Collectors;
 public class CartMapper {
     private ModelMapper modelMapper;
 
-    public CartDTO toCartDTO(Cart cart){
-        modelMapper.typeMap(Cart.class, CartDTO.class).addMappings(mapper->{
-            mapper.map(src->src.getUser().getName(),CartDTO::setUserName);
-        });
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cartDTO.setCartItems(toCartItemDTOList(new ArrayList<>(cart.getCartItems())));
+//    public CartDTO toCartDTO(Cart cart){
+//        modelMapper.typeMap(Cart.class, CartDTO.class).addMappings(mapper->{
+//            mapper.map(src->src.getUser().getName(),CartDTO::setUserName);
+//        });
+//        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+//        cartDTO.setCartItems(toCartItemDTOList(new ArrayList<>(cart.getCartItems())));
+//
+//        return cartDTO;
+//    }
+//
 
-        return cartDTO;
+//
+//    public List<CartItemDTO> toCartItemDTOList(List<CartItem> cartItems){
+//        return cartItems.stream()
+//                .map(this::toCartItemDTO)
+//                .collect(Collectors.toList());
+//    }
+
+    public CartDTO toCartDTO(Cart cart) {
+        CartDTO dto = new CartDTO();
+        dto.setId(cart.getId());
+        dto.setUserName(cart.getUser().getName());
+
+        dto.setCartItems(
+                cart.getCartItems().stream()
+                        .map(this::toCartItemDTO)
+                        .toList()
+        );
+
+        return dto;
     }
 
     public List<CartDTO> toCartDTOList(List<Cart> cartList){
         return cartList.stream()
                 .map(this::toCartDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<CartItemDTO> toCartItemDTOList(List<CartItem> cartItems){
-        return cartItems.stream()
-                .map(this::toCartItemDTO)
                 .collect(Collectors.toList());
     }
 

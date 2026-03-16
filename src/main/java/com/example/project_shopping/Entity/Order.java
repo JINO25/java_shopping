@@ -20,6 +20,9 @@ public class Order {
     @Column(name = "id", nullable = false)
     private Integer id;
 
+    @Column(unique = true)
+    private String stripeSessionId;
+
     @Column(name = "order_date")
     private LocalDate orderDate;
 
@@ -29,11 +32,15 @@ public class Order {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "User_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDetail> orderDetails = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Bill bill;

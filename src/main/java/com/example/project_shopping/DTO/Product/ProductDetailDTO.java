@@ -7,14 +7,13 @@ import java.util.List;
 
 @Getter
 @Setter
-public class UpdateProductReqDTO {
+public class ProductDetailDTO {
+    private Integer id;
     private String name;
     private String description;
+    private String sellerName;
     private String categoryName;
-
-    private String option;
-    private String color;
-    private Double price;
-    private Integer stock;
+    private List<ProductVariantDTO> variants;
+    private List<String> images;
 }
 

@@ -19,4 +19,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             "WHERE pv.product.user.id = :sellerId")
     List<Order> findOrdersBySellerId(@Param("sellerId") Integer sellerId);
 
+    boolean existsByStripeSessionId(String stripeSessionId);
+
 }

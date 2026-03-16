@@ -9,11 +9,25 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
-    @EntityGraph(attributePaths = "images")
-    @Query("SELECT p FROM Product p")
-    List<Product> findAllWithImages();
+    @Query("""
+    select p from Product p
+    left join fetch p.images i
+    left join p.productVariants v
+""")
+    List<Product> findAllWithImagesAndVariants();
+
+    @Query("""
+    select p from Product p
+    left join fetch p.images
+    left join fetch p.productVariants
+    left join fetch p.category
+    left join fetch p.user
+    where p.id = :id
+""")
+    Optional<Product> findByIdWithDetails(Integer id);
 
 
     List<Product> findProductByCategory(Category category);

@@ -4,6 +4,7 @@ import com.example.project_shopping.DTO.Order.CartItemeqDTO;
 import com.example.project_shopping.DTO.Order.OrderDTO;
 import com.example.project_shopping.DTO.Order.OrderDetailReqDTO;
 import com.example.project_shopping.Enums.OrderStatus;
+import com.example.project_shopping.Repository.OrderRepository;
 import com.example.project_shopping.Service.OrderService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,31 +28,25 @@ import java.util.Map;
 @AllArgsConstructor
 public class OrderControlle {
     private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody @Valid OrderDetailReqDTO orderDetailReqDTO, BindingResult bindingResult) {
-        if(bindingResult.hasErrors()){
-            StringBuilder errorMsg = new StringBuilder();
-            bindingResult.getAllErrors().forEach(e->{
-                errorMsg.append(e.getDefaultMessage()).append("\n");
-            });
-            return new ResponseEntity<>(errorMsg, HttpStatus.BAD_REQUEST);
-        }
-        OrderDTO createdOrder = orderService.createOrder(orderDetailReqDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
-    }
+    public ResponseEntity<?> createOrder(
+            @RequestBody @Valid List<OrderDetailReqDTO> orderDetailReqDTOList,
+            BindingResult bindingResult) {
 
-    @PostMapping("/batch")
-    public ResponseEntity<?> createOrderList(@RequestBody @Valid List<OrderDetailReqDTO> orderDetailReqDTOList, BindingResult bindingResult) {
-        if(bindingResult.hasErrors()){
+        if (bindingResult.hasErrors()) {
             StringBuilder errorMsg = new StringBuilder();
-            bindingResult.getAllErrors().forEach(e->{
+            bindingResult.getAllErrors().forEach(e -> {
                 errorMsg.append(e.getDefaultMessage()).append("\n");
             });
-            return new ResponseEntity<>(errorMsg, HttpStatus.BAD_REQUEST);
+
+            return ResponseEntity.badRequest().body(errorMsg.toString());
         }
-            OrderDTO createdOrder = orderService.createOrderList(orderDetailReqDTOList);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
+
+        OrderDTO createdOrder = orderService.createOrder(orderDetailReqDTOList);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 
     @GetMapping
@@ -113,68 +109,55 @@ public class OrderControlle {
     }
 
     @PostMapping("/create-checkout-session")
-    public ResponseEntity<?> createCheckoutSession(@Valid @RequestBody OrderDetailReqDTO orderDetailReqDTO, BindingResult bindingResult) throws StripeException {
+    public ResponseEntity<?> createCheckoutSession(
+            @RequestBody @Valid List<OrderDetailReqDTO> orderList,
+            BindingResult bindingResult
+    ) throws Exception {
+
         if (bindingResult.hasErrors()){
             StringBuilder msg = new StringBuilder();
-            bindingResult.getAllErrors().forEach(e->msg.append(e.getDefaultMessage()).append("\n"));
-            return new ResponseEntity<>(msg,HttpStatus.BAD_REQUEST);
+            bindingResult.getAllErrors()
+                    .forEach(e -> msg.append(e.getDefaultMessage()).append("\n"));
+            return new ResponseEntity<>(msg, HttpStatus.BAD_REQUEST);
         }
-        String url = orderService.createCheckoutSession(orderDetailReqDTO);
 
-        Map<String, String> responseData = new HashMap<>();
-        responseData.put("checkoutUrl", url);
+        String url = orderService.createCheckoutSession(orderList);
 
-        return ResponseEntity.ok(responseData);
-    }
+        Map<String, String> response = new HashMap<>();
+        response.put("checkoutUrl", url);
 
-    @PostMapping("/create-checkout-session-list")
-    public ResponseEntity<?> createCheckoutSessionList(@RequestBody @Valid List<OrderDetailReqDTO> orderDetailReqDTOList, BindingResult bindingResult) throws StripeException, JsonProcessingException {
-        if (bindingResult.hasErrors()){
-            StringBuilder msg = new StringBuilder();
-            bindingResult.getAllErrors().forEach(e->msg.append(e.getDefaultMessage()).append("\n"));
-            return new ResponseEntity<>(msg,HttpStatus.BAD_REQUEST);
-        }
-        String url = orderService.createCheckoutSessionList(orderDetailReqDTOList);
-
-        Map<String, String> responseData = new HashMap<>();
-        responseData.put("checkoutUrl", url);
-
-        return ResponseEntity.ok(responseData);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/payment-success")
-    public ResponseEntity<?> getSuccessFromStripe(@RequestParam("session_id") String session_id) throws StripeException {
-        Session session = Session.retrieve(session_id);
-        if(!"paid".equalsIgnoreCase(session.getPaymentStatus())){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+    public ResponseEntity<?> paymentSuccess(
+            @RequestParam("session_id") String sessionId
+    ) throws Exception {
+
+        Session session = Session.retrieve(sessionId);
+
+        if (!"paid".equalsIgnoreCase(session.getPaymentStatus())) {
+            return ResponseEntity.badRequest().build();
         }
 
-        String productVariantId = session.getMetadata().get("productVariantId");
-        String quantity = session.getMetadata().get("quantity");
-
-        OrderDetailReqDTO orderDetailReqDTO = new OrderDetailReqDTO();
-        orderDetailReqDTO.setProductVariantId(Integer.valueOf(productVariantId));
-        orderDetailReqDTO.setQuantity(Integer.valueOf(quantity));
-
-        OrderDTO createdOrder = orderService.createOrderWithStripe(orderDetailReqDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
-    }
-
-    @GetMapping("/payment-success-list")
-    public ResponseEntity<?> getSuccessFromStripeList(@RequestParam("session_id") String session_id) throws StripeException, JsonProcessingException {
-        Session session = Session.retrieve(session_id);
-        if(!"paid".equalsIgnoreCase(session.getPaymentStatus())){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        if (orderRepository.existsByStripeSessionId(sessionId)) {
+            return ResponseEntity
+                    .status(HttpStatus.FOUND)
+                    .location(URI.create("http://localhost:5173/"))
+                    .build();
         }
 
         String metadataJson = session.getMetadata().get("items");
 
-        // Parse lại list OrderDetailReqDTO
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<OrderDetailReqDTO> orderList = objectMapper.readValue(metadataJson, new TypeReference<>() {});
+        ObjectMapper mapper = new ObjectMapper();
+        List<OrderDetailReqDTO> orderList =
+                mapper.readValue(metadataJson, new TypeReference<>() {});
 
-        OrderDTO createdOrder = orderService.createOrderListWithStripe(orderList);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
+        OrderDTO order = orderService.createOrderWithStripe(orderList, sessionId);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(order);
     }
 
 }

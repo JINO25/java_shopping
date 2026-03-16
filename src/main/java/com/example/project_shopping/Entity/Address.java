@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -15,6 +17,7 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     String country;
+    String district;
     String city;
     String street;
     String phoneNumber;
@@ -23,4 +26,8 @@ public class Address {
     @JsonBackReference
     @JoinColumn(name = "user_id", nullable = true)
     User user;
+
+    @OneToMany(mappedBy = "address")
+    private List<Order> order;
+
 }

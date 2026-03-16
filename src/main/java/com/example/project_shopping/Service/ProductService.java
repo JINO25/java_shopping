@@ -1,23 +1,22 @@
 package com.example.project_shopping.Service;
 
-import com.example.project_shopping.DTO.Product.CreateProductRequestDTO;
-import com.example.project_shopping.DTO.Product.ProductDTO;
-import com.example.project_shopping.DTO.Product.UpdateProductReqDTO;
+import com.example.project_shopping.DTO.Product.*;
 
 import java.util.List;
 
 public interface ProductService {
-    List<ProductDTO> findAll();
+    List<ProductListDTO> findAll();
 
-    ProductDTO findProductByID(Integer id);
+    ProductDetailDTO findProductByID(Integer id);
 
-    List<ProductDTO> findProductByCategory(String name);
+    List<ProductListDTO> findProductByCategory(String name);
 
-    List<ProductDTO> findProductByName(String name);
+    List<ProductListDTO> findProductByName(String name);
 
     ProductDTO create(CreateProductRequestDTO productDTO);
 
     ProductDTO update(Integer id, Integer variantId , UpdateProductReqDTO updateProductReqDTO);
+//    ProductDTO update(Integer productId, UpdateProductReqDTO dto);
     ProductDTO updateMultiVariants(Integer id, ProductDTO updateProductReqDTO);
 
     boolean deleteVariant(Integer id, Integer variantID);

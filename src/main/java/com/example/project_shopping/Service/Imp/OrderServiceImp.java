@@ -22,6 +22,7 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -29,6 +30,7 @@ import java.util.*;
 @Service
 @AllArgsConstructor
 public class OrderServiceImp implements OrderService {
+    private final AddressRepository addressRepository;
     private OrderRepository orderRepository;
     private OrderDetailRepository orderDetailRepository;
     private UserRepository userRepository;
@@ -38,92 +40,70 @@ public class OrderServiceImp implements OrderService {
     private CartItemRepository cartItemRepository;
 
     @Override
-    public OrderDTO createOrder(OrderDetailReqDTO orderDetailReqDTO) {
+    @Transactional
+    public OrderDTO createOrder(List<OrderDetailReqDTO> orderDetailReqDTOList) {
+
         Integer userID = Auth.getCurrentUserID();
-        if(userID == null){
-            throw new InvalidTokenException("Please login againt!");
-        }
 
-        User user = userRepository.findById(userID)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
-
-        ProductVariant productVariant = productVariantRepository.findById(orderDetailReqDTO.getProductVariantId())
-                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + orderDetailReqDTO.getProductVariantId()));
-
-        if (productVariant.getStock() < orderDetailReqDTO.getQuantity()) {
-            throw new OutOfStockException("Not enough stock for variant ID: " + productVariant.getId());
-        }
-
-        productVariant.setStock(productVariant.getStock() - orderDetailReqDTO.getQuantity());
-
-        Order order = new Order();
-        order.setOrderDate(LocalDate.now());
-        order.setOrderStatus(OrderStatus.PENDING);
-        order.setUser(user);
-
-        OrderDetail orderDetail = new OrderDetail();
-        orderDetail.setPrice(productVariant.getPrice());
-        orderDetail.setQuantity(orderDetailReqDTO.getQuantity());
-        orderDetail.setOrder(order);
-        orderDetail.setProductVariant(productVariant);
-
-        order.setOrderDetails(Collections.singletonList(orderDetail));
-
-        order = orderRepository.save(order);
-
-        Bill bill = new Bill();
-        bill.setOrder(order);
-        bill.setBillDate(LocalDate.now());
-        bill.setMethod("COD");
-        bill.setPaymentStatus(PaymentStatus.UNPAID);
-        bill.setTotal(orderDetail.getPrice() * orderDetail.getQuantity());
-
-        billRepository.save(bill);
-
-        return orderMapper.toOrderDTO(order);
-    }
-
-    @Override
-    public OrderDTO createOrderList(List<OrderDetailReqDTO> orderDetailReqDTOList) {
-        Integer userID = Auth.getCurrentUserID();
         if (userID == null) {
             throw new InvalidTokenException("Please login again!");
         }
 
         User user = userRepository.findById(userID)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("User not found with id: " + userID));
+
+        if (orderDetailReqDTOList.isEmpty()) {
+            throw new IllegalArgumentException("Order must have at least one product");
+        }
+
+        Integer addressId = orderDetailReqDTOList.get(0).getAddressId();
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Address not found with id: " + addressId));
 
         Order order = new Order();
         order.setOrderDate(LocalDate.now());
         order.setOrderStatus(OrderStatus.PENDING);
         order.setUser(user);
+        order.setAddress(address);
 
         List<OrderDetail> orderDetails = new ArrayList<>();
 
-        for (OrderDetailReqDTO reqDTO : orderDetailReqDTOList) {
-            ProductVariant variant = productVariantRepository.findById(reqDTO.getProductVariantId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + reqDTO.getProductVariantId()));
+        double total = 0;
 
-            if (variant.getStock() < reqDTO.getQuantity()) {
-                throw new OutOfStockException("Not enough stock for variant ID: " + variant.getId());
+        for (OrderDetailReqDTO req : orderDetailReqDTOList) {
+
+            ProductVariant variant = productVariantRepository
+                    .findById(req.getProductVariantId())
+                    .orElseThrow(() ->
+                            new EntityNotFoundException(
+                                    "Product variant not found with id: " + req.getProductVariantId()));
+
+            if (variant.getStock() < req.getQuantity()) {
+                throw new OutOfStockException(
+                        "Not enough stock for variant ID: " + variant.getId());
             }
 
-            variant.setStock(variant.getStock() - reqDTO.getQuantity());
+            // update stock
+            variant.setStock(variant.getStock() - req.getQuantity());
+            productVariantRepository.save(variant);
 
             OrderDetail orderDetail = new OrderDetail();
-            orderDetail.setQuantity(reqDTO.getQuantity());
-            orderDetail.setPrice(variant.getPrice());
-            orderDetail.setProductVariant(variant);
             orderDetail.setOrder(order);
+            orderDetail.setProductVariant(variant);
+            orderDetail.setQuantity(req.getQuantity());
+            orderDetail.setPrice(variant.getPrice());
+
+            total += variant.getPrice() * req.getQuantity();
 
             orderDetails.add(orderDetail);
         }
 
         order.setOrderDetails(orderDetails);
-        order = orderRepository.save(order);
 
-        Double total = orderDetails.stream()
-                .mapToDouble(odr->odr.getPrice()*odr.getQuantity()).sum();
+        order = orderRepository.save(order);
 
         Bill bill = new Bill();
         bill.setOrder(order);
@@ -275,208 +255,133 @@ public class OrderServiceImp implements OrderService {
     }
 
     @Override
-    public String createCheckoutSession(OrderDetailReqDTO orderDetailReqDTO) throws StripeException {
-        ProductVariant variant = productVariantRepository.findById(orderDetailReqDTO.getProductVariantId())
-                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+    public String createCheckoutSession(List<OrderDetailReqDTO> orderList)
+            throws StripeException, JsonProcessingException {
 
-        if(variant.getStock()<orderDetailReqDTO.getQuantity()){
-            throw new OutOfStockException("Not enough stock for variant ID: " + variant.getId());
-        }
-        double amountInCents = variant.getPrice() * 100L * orderDetailReqDTO.getQuantity();
-
-        Map<String,String> metadata = new HashMap<>();
-        metadata.put("productVariantId", String.valueOf(orderDetailReqDTO.getProductVariantId()));
-        metadata.put("quantity",String.valueOf(orderDetailReqDTO.getQuantity()));
-
-        SessionCreateParams params = SessionCreateParams.builder()
-                .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:8080/order/payment-success?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl("https://localhost:8080/payment-cancelled")
-                .putAllMetadata(metadata)
-                .addLineItem(
-                        SessionCreateParams.LineItem.builder()
-                                .setQuantity(Long.valueOf(orderDetailReqDTO.getQuantity()))
-                                .setPriceData(
-                                        SessionCreateParams.LineItem.PriceData.builder()
-                                                .setCurrency("usd")
-                                                .setUnitAmount((long) amountInCents)
-                                                .setProductData(
-                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                .setName("Product: " + variant.getProduct().getName())
-                                                                .build()
-                                                )
-                                                .build()
-                                )
-                                .build()
-                )
-                .build();
-
-
-        Session session = Session.create(params);
-        return session.getUrl();
-    }
-
-    @Override
-    public OrderDTO createOrderWithStripe(OrderDetailReqDTO orderDetailReqDTO) {
-        Integer userID = Auth.getCurrentUserID();
-        if(userID == null){
-            throw new InvalidTokenException("Please login againt!");
-        }
-
-        User user = userRepository.findById(userID)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
-
-        ProductVariant productVariant = productVariantRepository.findById(orderDetailReqDTO.getProductVariantId())
-                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + orderDetailReqDTO.getProductVariantId()));
-
-        if (productVariant.getStock() < orderDetailReqDTO.getQuantity()) {
-            throw new OutOfStockException("Not enough stock for variant ID: " + productVariant.getId());
-        }
-
-        productVariant.setStock(productVariant.getStock() - orderDetailReqDTO.getQuantity());
-
-        Order order = new Order();
-        order.setOrderDate(LocalDate.now());
-        order.setOrderStatus(OrderStatus.PENDING);
-        order.setUser(user);
-
-        OrderDetail orderDetail = new OrderDetail();
-        orderDetail.setPrice(productVariant.getPrice());
-        orderDetail.setQuantity(orderDetailReqDTO.getQuantity());
-        orderDetail.setOrder(order);
-        orderDetail.setProductVariant(productVariant);
-
-        order.setOrderDetails(Collections.singletonList(orderDetail));
-
-        order = orderRepository.save(order);
-
-        Bill bill = new Bill();
-        bill.setOrder(order);
-        bill.setBillDate(LocalDate.now());
-        bill.setMethod("STRIPE");
-        bill.setPaymentStatus(PaymentStatus.PAID);
-        bill.setPaymentTime(LocalDate.now());
-        bill.setTotal(orderDetail.getPrice() * orderDetail.getQuantity());
-
-        billRepository.save(bill);
-
-        return orderMapper.toOrderDTO(order);
-    }
-
-    @Override
-    public String createCheckoutSessionList(List<OrderDetailReqDTO> orderDetailReqDTOList) throws StripeException, JsonProcessingException {
         List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
-        List<Map<String, Object>> productMetadataList = new ArrayList<>();
 
-        for (OrderDetailReqDTO reqDTO : orderDetailReqDTOList) {
-            ProductVariant variant = productVariantRepository.findById(reqDTO.getProductVariantId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + reqDTO.getProductVariantId()));
+        for (OrderDetailReqDTO req : orderList) {
 
-            if (variant.getStock() < reqDTO.getQuantity()) {
-                throw new OutOfStockException("Not enough stock for variant ID: " + variant.getId());
+            ProductVariant variant = productVariantRepository
+                    .findById(req.getProductVariantId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+            if (variant.getStock() < req.getQuantity()) {
+                throw new OutOfStockException("Not enough stock");
             }
 
-            variant.setStock(variant.getStock() - reqDTO.getQuantity());
+            long amount = (long) (variant.getPrice() * 100);
 
-            double amountInCents = variant.getPrice() * 100L; // auto multi quantity of product
-
-            SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
-                    .setQuantity((long) reqDTO.getQuantity())
-                    .setPriceData(
-                            SessionCreateParams.LineItem.PriceData.builder()
-                                    .setCurrency("usd")
-                                    .setUnitAmount((long) amountInCents)
-                                    .setProductData(
-                                            SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                    .setName("Product: " + variant.getProduct().getName())
-                                                    .build()
-                                    )
-                                    .build()
-                    )
-                    .build();
+            SessionCreateParams.LineItem lineItem =
+                    SessionCreateParams.LineItem.builder()
+                            .setQuantity(req.getQuantity().longValue())
+                            .setPriceData(
+                                    SessionCreateParams.LineItem.PriceData.builder()
+                                            .setCurrency("usd")
+                                            .setUnitAmount(amount)
+                                            .setProductData(
+                                                    SessionCreateParams.LineItem.PriceData.ProductData
+                                                            .builder()
+                                                            .setName(variant.getProduct().getName())
+                                                            .build()
+                                            )
+                                            .build()
+                            )
+                            .build();
 
             lineItems.add(lineItem);
-
-            // Add metadata for later order creation
-            Map<String, Object> metadataItem = new HashMap<>();
-            metadataItem.put("productVariantId", reqDTO.getProductVariantId());
-            metadataItem.put("quantity", reqDTO.getQuantity());
-            productMetadataList.add(metadataItem);
         }
 
-        // Convert metadata to JSON string
-        String metadataJson = new ObjectMapper().writeValueAsString(productMetadataList);
-        Map<String, String> metadata = new HashMap<>();
+        String metadataJson = new ObjectMapper().writeValueAsString(orderList);
+
+        Map<String,String> metadata = new HashMap<>();
         metadata.put("items", metadataJson);
 
-        // Build Stripe session
-        SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
-                .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:8080/order/payment-success-list?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl("http://localhost:8080/payment-cancelled")
-                .putAllMetadata(metadata);
+        SessionCreateParams.Builder params =
+                SessionCreateParams.builder()
+                        .setMode(SessionCreateParams.Mode.PAYMENT)
+                        .setSuccessUrl("http://localhost:5173/payment-success?session_id={CHECKOUT_SESSION_ID}")
+                        .setCancelUrl("http://localhost:5173/payment-cancelled")
+                        .putAllMetadata(metadata);
 
-        for (SessionCreateParams.LineItem item : lineItems) {
-            paramsBuilder.addLineItem(item);
-        }
+        lineItems.forEach(params::addLineItem);
 
-        Session session = Session.create(paramsBuilder.build());
+        Session session = Session.create(params.build());
+
         return session.getUrl();
     }
 
-
     @Override
-    public OrderDTO createOrderListWithStripe(List<OrderDetailReqDTO> orderDetailReqDTOList) {
+    @Transactional
+    public OrderDTO createOrderWithStripe(List<OrderDetailReqDTO> orderList, String sessionId) {
+
         Integer userID = Auth.getCurrentUserID();
+
         if (userID == null) {
             throw new InvalidTokenException("Please login again!");
         }
 
         User user = userRepository.findById(userID)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userID));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if (orderList.isEmpty()) {
+            throw new IllegalArgumentException("Order must have at least one product");
+        }
+
+        // lấy address giống COD
+        Integer addressId = orderList.get(0).getAddressId();
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new EntityNotFoundException("Address not found"));
 
         Order order = new Order();
+        order.setStripeSessionId(sessionId);
         order.setOrderDate(LocalDate.now());
         order.setOrderStatus(OrderStatus.PENDING);
         order.setUser(user);
+        order.setAddress(address);
 
         List<OrderDetail> orderDetails = new ArrayList<>();
+        double total = 0;
 
-        for (OrderDetailReqDTO reqDTO : orderDetailReqDTOList) {
-            ProductVariant variant = productVariantRepository.findById(reqDTO.getProductVariantId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + reqDTO.getProductVariantId()));
+        for (OrderDetailReqDTO req : orderList) {
 
-            if (variant.getStock() < reqDTO.getQuantity()) {
-                throw new OutOfStockException("Not enough stock for variant ID: " + variant.getId());
+            ProductVariant variant = productVariantRepository
+                    .findById(req.getProductVariantId())
+                    .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+
+            if (variant.getStock() < req.getQuantity()) {
+                throw new OutOfStockException("Not enough stock");
             }
 
-            variant.setStock(variant.getStock() - reqDTO.getQuantity());
+            variant.setStock(variant.getStock() - req.getQuantity());
+            productVariantRepository.save(variant);
 
-            OrderDetail orderDetail = new OrderDetail();
-            orderDetail.setQuantity(reqDTO.getQuantity());
-            orderDetail.setPrice(variant.getPrice());
-            orderDetail.setProductVariant(variant);
-            orderDetail.setOrder(order);
+            OrderDetail od = new OrderDetail();
+            od.setOrder(order);
+            od.setProductVariant(variant);
+            od.setQuantity(req.getQuantity());
+            od.setPrice(variant.getPrice());
 
-            orderDetails.add(orderDetail);
+            total += variant.getPrice() * req.getQuantity();
+
+            orderDetails.add(od);
         }
 
         order.setOrderDetails(orderDetails);
         order = orderRepository.save(order);
 
-        Double total = orderDetails.stream()
-                .mapToDouble(odr->odr.getPrice()*odr.getQuantity()).sum();
-
         Bill bill = new Bill();
         bill.setOrder(order);
         bill.setBillDate(LocalDate.now());
         bill.setMethod("STRIPE");
-        bill.setPaymentTime(LocalDate.now());
         bill.setPaymentStatus(PaymentStatus.PAID);
+        bill.setPaymentTime(LocalDate.now());
         bill.setTotal(total);
 
         billRepository.save(bill);
 
         return orderMapper.toOrderDTO(order);
     }
+
 }

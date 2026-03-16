@@ -1,8 +1,6 @@
 package com.example.project_shopping.Controller;
 
-import com.example.project_shopping.DTO.Product.CreateProductRequestDTO;
-import com.example.project_shopping.DTO.Product.ProductDTO;
-import com.example.project_shopping.DTO.Product.UpdateProductReqDTO;
+import com.example.project_shopping.DTO.Product.*;
 import com.example.project_shopping.Service.ProductService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -16,13 +14,13 @@ import java.util.List;
 
 @Controller
 @AllArgsConstructor
-@RequestMapping("/product")
+@RequestMapping("/products")
 public class ProductController {
     private ProductService productService;
 
     @GetMapping()
-    public ResponseEntity<List<ProductDTO>> getAllProduct(@RequestParam(value = "name", required = false) String name){
-        List<ProductDTO> productDTO;
+    public ResponseEntity<List<ProductListDTO>> getAllProduct(@RequestParam(value = "name", required = false) String name){
+        List<ProductListDTO> productDTO;
         if(name != null && !name.isEmpty()){
             productDTO = productService.findProductByName(name);
             return new ResponseEntity<>(productDTO, HttpStatus.OK);
@@ -32,14 +30,14 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> getProductByID(@PathVariable Integer id){
-        ProductDTO productDTO = productService.findProductByID(id);
+    public ResponseEntity<ProductDetailDTO> getProductByID(@PathVariable Integer id){
+        ProductDetailDTO productDTO = productService.findProductByID(id);
         return new ResponseEntity<>(productDTO, HttpStatus.OK);
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<ProductDTO>> getProductByCategory(@PathVariable String category){
-        List<ProductDTO> productDTO = productService.findProductByCategory(category);
+    public ResponseEntity<List<ProductListDTO>> getProductByCategory(@PathVariable String category){
+        List<ProductListDTO> productDTO = productService.findProductByCategory(category);
         return new ResponseEntity<>(productDTO, HttpStatus.OK);
     }
 

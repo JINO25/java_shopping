@@ -10,5 +10,6 @@ public class AddressDTO {
     String country;
     String city;
     String street;
+    String district;
     String phoneNumber;
 }

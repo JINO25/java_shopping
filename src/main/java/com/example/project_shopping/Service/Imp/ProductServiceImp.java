@@ -1,9 +1,6 @@
 package com.example.project_shopping.Service.Imp;
 
-import com.example.project_shopping.DTO.Product.CreateProductRequestDTO;
-import com.example.project_shopping.DTO.Product.ProductDTO;
-import com.example.project_shopping.DTO.Product.ProductVariantDTO;
-import com.example.project_shopping.DTO.Product.UpdateProductReqDTO;
+import com.example.project_shopping.DTO.Product.*;
 import com.example.project_shopping.Entity.Category;
 import com.example.project_shopping.Entity.Product;
 import com.example.project_shopping.Entity.ProductVariant;
@@ -20,6 +17,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -31,40 +29,124 @@ public class ProductServiceImp implements ProductService {
     private UserRepository userRepository;
 
     @Override
-    public List<ProductDTO> findAll() {
-        List<Product> products = productRepository.findAllWithImages();
+    public List<ProductListDTO> findAll() {
+        List<Product> products = productRepository.findAllWithImagesAndVariants();
+        return productMapper.toProductListDTOs(products);
+    }
 
-        List<ProductDTO> productDTOs = productMapper.toProductDTOList(products);
 
-        return productDTOs;
+    @Override
+    public ProductDetailDTO findProductByID(Integer id){
+        Product product = productRepository.findByIdWithDetails(id).orElseThrow(()->new EntityNotFoundException("Product not found with id: "+id));
+        return productMapper.toProductDetailDTO(product);
     }
 
     @Override
-    public ProductDTO findProductByID(Integer id){
-        Product product = productRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Product not found with id: "+id));
-        return productMapper.toProductDTO(product);
-    }
-
-    @Override
-    public List<ProductDTO> findProductByCategory(String name){
+    public List<ProductListDTO> findProductByCategory(String name){
         Category category = categoryRepository.findByName(name);
+
         if(category == null) throw new EntityNotFoundException("Category: "+ name+" not found!");
+
         List<Product> product = productRepository.findProductByCategory(category);
-        System.out.println("Found products: " + product.size());
-        return productMapper.toProductDTOList(product);
+
+        return productMapper.toProductListDTOs(product);
 
     }
 
     @Override
-    public List<ProductDTO> findProductByName(String name){
+    public List<ProductListDTO> findProductByName(String name){
         List<Product> product = productRepository.findProductByNameLike(name);
-        return productMapper.toProductDTOList(product);
+        return productMapper.toProductListDTOs(product);
     }
+
+//    @Override
+//    public ProductDTO create(CreateProductRequestDTO dto) {
+//        Integer userID = Auth.getCurrentUserID();
+//        Product product = new Product();
+//        product.setName(dto.getName());
+//        product.setDescription(dto.getDescription());
+//
+//        Category category = categoryRepository.findByName(dto.getCategoryName());
+//        if (category == null) {
+//            category = new Category();
+//            category.setName(dto.getCategoryName());
+//            categoryRepository.save(category);
+//        }
+//        product.setCategory(category);
+//
+//        User user = userRepository.findById(userID)
+//                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+//        product.setUser(user);
+//
+//
+//        Set<ProductVariant> variants = new HashSet<>();
+//        for (ProductVariantDTO vDto : dto.()) {
+//            ProductVariant v = new ProductVariant();
+//            v.setOption(vDto.getOption());
+//            v.setColor(vDto.getColor());
+//            v.setPrice(vDto.getPrice());
+//            v.setStock(vDto.getStock());
+//            v.setProduct(product); // quan hệ ngược
+//
+//            variants.add(v);
+//        }
+//
+//        product.setProductVariants(variants);
+//
+//        Product savedProduct = productRepository.save(product);
+//
+//        return productMapper.toProductDTO(savedProduct);
+//    }
 
     @Override
     public ProductDTO create(CreateProductRequestDTO dto) {
         Integer userID = Auth.getCurrentUserID();
+
         Product product = new Product();
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+
+        // Category
+        Category category = categoryRepository.findByName(dto.getCategoryName());
+        if (category == null) {
+            category = new Category();
+            category.setName(dto.getCategoryName());
+            categoryRepository.save(category);
+        }
+        product.setCategory(category);
+
+        // User
+        User user = userRepository.findById(userID)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        product.setUser(user);
+
+        // Variants
+        Set<ProductVariant> variants = new HashSet<>();
+        for (ProductVariantDTO vDto : dto.getVariants()) {
+            ProductVariant v = new ProductVariant();
+            v.setOption(vDto.getOption());
+            v.setColor(vDto.getColor());
+            v.setPrice(vDto.getPrice());
+            v.setStock(vDto.getStock());
+            v.setProduct(product); // quan hệ ngược
+
+            variants.add(v);
+        }
+
+        product.setProductVariants(variants);
+
+        Product savedProduct = productRepository.save(product);
+
+        return productMapper.toProductDTO(savedProduct);
+    }
+
+
+    @Override
+    public ProductDTO update(Integer productId, Integer variantId, UpdateProductReqDTO dto) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + productId));
+
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
 
@@ -76,51 +158,25 @@ public class ProductServiceImp implements ProductService {
         }
         product.setCategory(category);
 
-        User user = userRepository.findById(userID)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        product.setUser(user);
+        ProductVariant variant = product.getProductVariants().stream()
+                .filter(v -> v.getId().equals(variantId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Variant not found with id: " + variantId + " in product " + productId
+                ));
 
-
-        ProductVariant variant = new ProductVariant();
+        // Update variant
         variant.setOption(dto.getOption());
         variant.setColor(dto.getColor());
         variant.setPrice(dto.getPrice());
         variant.setStock(dto.getStock());
-        variant.setProduct(product);
 
-        product.setProductVariants(new HashSet<>(List.of(variant)));
-        productRepository.save(product);
+        // Không cần save variant riêng nếu cascade = ALL
+        Product savedProduct = productRepository.save(product);
 
-        return productMapper.toProductDTO(product);
+        return productMapper.toProductDTO(savedProduct);
     }
 
-    @Override
-    public ProductDTO update(Integer id, Integer variantId, UpdateProductReqDTO updateProductReqDTO){
-        Product existingProduct = productRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Product not found with id: "+id));
-
-        existingProduct.setName(updateProductReqDTO.getName());
-        existingProduct.setDescription(updateProductReqDTO.getDescription());
-
-        Category category = categoryRepository.findByName(updateProductReqDTO.getCategoryName());
-        if(category == null){
-            category = new Category();
-            category.setName(updateProductReqDTO.getCategoryName());
-            categoryRepository.save(category);
-        }
-
-        existingProduct.setCategory(category);
-
-        ProductVariant variant = productVariantRepository.findById(variantId).orElseThrow(()->new RuntimeException("Product variant not found with id: "+variantId));
-        variant.setOption(updateProductReqDTO.getOption());
-        variant.setColor(updateProductReqDTO.getColor());
-        variant.setPrice(updateProductReqDTO.getPrice());
-        variant.setStock(updateProductReqDTO.getStock());
-        variant.setProduct(existingProduct);
-        productVariantRepository.save(variant);
-        productRepository.save(existingProduct);
-
-        return  productMapper.toProductDTO(existingProduct);
-    }
 
     @Override
     public ProductDTO updateMultiVariants(Integer productId, ProductDTO updateProductReqDTO) {
